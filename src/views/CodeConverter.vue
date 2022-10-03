@@ -66,11 +66,10 @@ import "codemirror/keymap/sublime.js"
 // import "codemirror/addon/fold/xml-fold.js"
 
 const fs = require('fs');
-const { parse } = require("@babel/parser");
-// const traverse = require("@babel/traverse").default;
-import traverse from "@babel/traverse";
+const {parse} = require("@babel/parser");
+const  traverse = require("@babel/traverse").default;
 const types = require("@babel/types");
-const generator = require("@babel/generator").default;
+import generator from "@babel/generator";
 
 export default {
     components: {
@@ -84,6 +83,10 @@ export default {
                 if(a=1,b=2,c==3) d=b;
 
                 {{a=1;}}
+
+                function a1() {
+                    if(x) return;
+                }
             `,
             result: dedent`
                 
@@ -183,6 +186,16 @@ export default {
 
                         }
 
+                    }
+                },
+
+                // if(x) return; 转为 if(x){ return;}
+                ReturnStatement: {
+                    exit(path) {
+                        if ( path.parentPath.isIfStatement()) {
+                            let nodes = [path.node];
+                            path.replaceWith(types.blockStatement(nodes))
+                        }
                     }
                 },
         

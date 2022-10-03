@@ -12,8 +12,8 @@ const routes = [
     },
     {
         path: "/javascript_demo",
-        name: "JavaScriptDemo",
-        component: () => import("../views/JavaScriptDemo.vue")
+        name: "CodeConverter",
+        component: () => import("../views/CodeConverter.vue")
     }
 ]
 

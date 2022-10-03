@@ -1,23 +1,23 @@
 <template>
     <div class="home">
         <Toolbar  />
-        <JavaScriptDemo  />
+        <CodeConverter  />
         <Footer  />
     </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import JavaScriptDemo from "./JavaScriptDemo.vue";
 import Toolbar from "./Toolbar.vue";
 import Footer from "./Footer.vue";
+import CodeConverter from "./CodeConverter.vue";
 
 export default {
     name: "Home",
     components: {
         Toolbar,
-        JavaScriptDemo,
         Footer,
+        CodeConverter
     }
 };
 </script>
