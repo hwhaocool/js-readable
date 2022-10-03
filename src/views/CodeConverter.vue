@@ -92,8 +92,12 @@ export default {
                 a = m?11:2;
                 1 - 1 ? aa = b + 4 : c + 5 ? cc = a + 1 : b + 2 ? ee = c + 3 : ff = 4;
 
-                // LogicalExpression + ConditionalExpression
+                // LogicalExpression + ConditionalExpression                
                 a==1 && (b?c=2:d=4);
+
+                // for
+                
+                for (console.log("hei"), aa=1, r = 0; r < bb.length; r++) {}
             `,
             result: dedent`
                 
@@ -167,15 +171,19 @@ export default {
                             path.parentPath.replaceWith(js_code2.program.body[0])
                         }
 
-                        // if(a=1,b=2,c==3)  转为 a=1;b=2; if(c==3)
-                        if (path.parentPath.isIfStatement() ) {
+                        // if 和 for 处理逻辑一致
+                        // 『if』 if(a=1,b=2,c==3)  转为 a=1;b=2; if(c==3)
+
+                        // 『for』 for (console.log("hei"), aa=1, r = 0; r < bb.length; r++) {} 
+                        //  转为 console.log("hei");aa = 1; for (r = 0; r < bb.length; r++) {}
+                        if (path.parentPath.isIfStatement() || path.parentPath.isForStatement() ) {
                             
                             // 语句提取出来，放到if前面
                             let nodes = path.node.expressions;
 
                             for(var i=0; i<nodes.length-1; i++) {
                                 let tmpNpde = nodes[i];
-                                let str =  generator(tmpNpde).code + ";";
+                                let str =  generator(tmpNpde).code;
 
                                 let js_code2 = parse(
                                     `${str}`

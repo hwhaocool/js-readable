@@ -86,7 +86,24 @@ if (a == 1) {
 }
 ```
 
-### 5. for 语句展开
+### 6. for 控制语句展开
+```js
+for (console.log("hei"), aa=1, r = 0; r < bb.length; r++) {
+  
+}
+```
+👇
+```js
+console.log("hei");
+aa = 1;
+for (r = 0; r < bb.length; r++) {
+
+}
+```
+
+
+
+### 7. o O l L l1 oO0I1 变量替换
 
 
 ## 参考
