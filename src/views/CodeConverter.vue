@@ -87,6 +87,10 @@ export default {
                 function a1() {
                     if(x) return;
                 }
+
+                // ConditionalExpression
+                a = m?11:2;
+                1 - 1 ? aa = b + 4 : c + 5 ? cc = a + 1 : b + 2 ? ee = c + 3 : ff = 4;
             `,
             result: dedent`
                 
@@ -232,11 +236,55 @@ export default {
 
             }
 
+            const visitorConditional =
+            {
+                // 三元表达式
+                ConditionalExpression: {
+                    exit(path) {
+
+                        if(path.parentPath.isAssignmentExpression()) {
+                            return;
+                        }
+
+                        let {test, consequent, alternate} = path.node;
+                        let new_consequent = types.BlockStatement([types.ExpressionStatement(consequent)]);
+                        let new_alternate = types.BlockStatement([types.ExpressionStatement(alternate)]);
+                        let if_node = types.IfStatement(test, new_consequent, new_alternate);
+
+                        path.replaceWithMultiple(if_node);
+
+                        path.stop();
+                    },
+                }
+
+            }
+
             traverse(ast, visitor1);
             traverse(ast, visitor2);
+
+            // 递归处理三元表达式
+            this.recursionConditional(ast, visitorConditional);
+
+
             let { code } = generator(ast);
             return code;
-        }
+        },
+        recursionConditional(ast, visitorConditional) {
+
+            // 递归处理，直到两次结果一致才会停下来
+            traverse(ast, visitorConditional)
+            let first  = generator(ast).code;
+
+            traverse(ast, visitorConditional)
+            let  second  = generator(ast).code;
+
+            while(first !== second) {
+                first = second;
+                traverse(ast, visitorConditional)
+                second  = generator(ast).code;
+            }
+
+        },
     },
     computed: {
         codemirror() {
