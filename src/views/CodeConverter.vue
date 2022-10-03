@@ -91,6 +91,9 @@ export default {
                 // ConditionalExpression
                 a = m?11:2;
                 1 - 1 ? aa = b + 4 : c + 5 ? cc = a + 1 : b + 2 ? ee = c + 3 : ff = 4;
+
+                // LogicalExpression + ConditionalExpression
+                a==1 && (b?c=2:d=4);
             `,
             result: dedent`
                 
@@ -202,9 +205,30 @@ export default {
                         }
                     }
                 },
+
+                // a==1 && (b?c=2:d=4)  => if(a==1) {b?c=2:d=4}
+                LogicalExpression: {
+                    exit(path) {
+
+                        let {left, operator, right} = path.node;
+
+                        let rightPath = path.get("right");
+
+                        // 找到最外层的逻辑表达式
+                        if(rightPath.isConditionalExpression()) {
+                            
+                            if(operator === "&&") {
+                                
+                                let if_node = types.IfStatement(left, types.blockStatement([types.expressionStatement(right)]) , null);
+                                path.replaceWithMultiple(if_node);
+                            }
+                        }
+                    },
+                }
         
             }
 
+            // 第二层处理，需要依赖之前的处理结果
             const visitor2 =
             {
                 // if 后面要么是 ExpressionStatement 要么是 BlockStatement
