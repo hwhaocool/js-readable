@@ -11,7 +11,7 @@ const routes = [
         component: Home
     },
     {
-        path: "/javascript_demo",
+        path: "/js-readable/",
         name: "CodeConverter",
         component: () => import("../views/CodeConverter.vue")
     }
