@@ -1,6 +1,5 @@
 <template>
     <div id="app " clas="page">
-        
         <router-view />
     </div>
 </template>
@@ -13,5 +12,4 @@
     text-align: left;
     color: #2c3e50;
 }
-
 </style>

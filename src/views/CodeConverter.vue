@@ -1,25 +1,20 @@
 <template>
     <div class="content-inside">
-            <div class="splitpane" style="display: flex; flex-direction: row;">
-
-                <codemirror ref="myCm"
-                        :value="code" 
-                        :options="cmOption"
-                        @ready="onCmReady"
-                        @input="onCmCodeChange">
+        <div class="splitpane" style="display: flex; flex-direction: row;">
+            <codemirror
+                ref="myCm"
+                :value="code"
+                :options="cmOption"
+                @ready="onCmReady"
+                @input="onCmCodeChange"
+            >
             </codemirror>
-            </div>
-    
-            <div class="splitpane" style="display: flex; flex-direction: row;">
-                <codemirror v-model="result" :options="cmOption" />
-                
-            </div>
-    
-    
+        </div>
+
+        <div class="splitpane" style="display: flex; flex-direction: row;">
+            <codemirror v-model="result" :options="cmOption" />
+        </div>
     </div>
-    
-    
-    
 </template>
 
 <script>
@@ -65,11 +60,10 @@ import "codemirror/keymap/sublime.js"
 // import "codemirror/addon/fold/markdown-fold.js"
 // import "codemirror/addon/fold/xml-fold.js"
 
-const fs = require('fs');
-const {parse} = require("@babel/parser");
-const  traverse = require("@babel/traverse").default;
-const types = require("@babel/types");
-import generator from "@babel/generator";
+const { parse } = require("@babel/parser")
+const traverse = require("@babel/traverse").default
+const types = require("@babel/types")
+import generator from "@babel/generator"
 
 export default {
     components: {
@@ -98,6 +92,13 @@ export default {
                 // for
                 
                 for (console.log("hei"), aa=1, r = 0; r < bb.length; r++) {}
+
+                // oO0I1
+                l1 = 1;
+                Oo = 2;
+                I1 = 3;
+                Il = 4;
+                li0 = 5;
             `,
             result: dedent`
                 
@@ -134,81 +135,80 @@ export default {
     },
     methods: {
         onCmReady(cm) {
-            let newcode = this.convert(this.code);
-            this.result = newcode;
+            let newcode = this.convert(this.code)
+            this.result = newcode
         },
         onCmFocus(cm) {
-            console.log('the editor is focused!', cm)
+            console.log("the editor is focused!", cm)
         },
         onCmCodeChange(jscode) {
-            let newcode = this.convert(jscode);
-            this.result = newcode;
+            let newcode = this.convert(jscode)
+            this.result = newcode
         },
         convert(jscode) {
             // console.log('convert code', jscode)
 
-            let ast = parse(jscode);
+            let ast = parse(jscode)
 
-            const visitor1 =    {
+            const visitor1 = {
                 // 连续表达式，拆分为多行
                 SequenceExpression: {
                     exit(path) {
                         // if(x) a=1, c=2; 转为 if(x){ a=1; c=2;}
-                        if (path.parentPath.isExpressionStatement() ) {
-
-                            let nodes = path.node.expressions;
-                            var str = "";
-                            for(var i=0; i<nodes.length; i++) {
-                                let tmpNpde = nodes[i];
+                        if (path.parentPath.isExpressionStatement()) {
+                            let nodes = path.node.expressions
+                            var str = ""
+                            for (var i = 0; i < nodes.length; i++) {
+                                let tmpNpde = nodes[i]
                                 let aa = generator(tmpNpde).code
-                                str+=  aa;
-                                str+=  ";";
+                                str += aa
+                                str += ";"
                             }
 
-                            let js_code2 = parse(
-                                `{${str}}`
+                            let js_code2 = parse(`{${str}}`)
+                            path.parentPath.replaceWith(
+                                js_code2.program.body[0]
                             )
-                            path.parentPath.replaceWith(js_code2.program.body[0])
                         }
 
                         // if 和 for 处理逻辑一致
                         // 『if』 if(a=1,b=2,c==3)  转为 a=1;b=2; if(c==3)
 
-                        // 『for』 for (console.log("hei"), aa=1, r = 0; r < bb.length; r++) {} 
+                        // 『for』 for (console.log("hei"), aa=1, r = 0; r < bb.length; r++) {}
                         //  转为 console.log("hei");aa = 1; for (r = 0; r < bb.length; r++) {}
-                        if (path.parentPath.isIfStatement() || path.parentPath.isForStatement() ) {
-                            
+                        if (
+                            path.parentPath.isIfStatement() ||
+                            path.parentPath.isForStatement()
+                        ) {
                             // 语句提取出来，放到if前面
-                            let nodes = path.node.expressions;
+                            let nodes = path.node.expressions
 
-                            for(var i=0; i<nodes.length-1; i++) {
-                                let tmpNpde = nodes[i];
-                                let str =  generator(tmpNpde).code;
+                            for (var i = 0; i < nodes.length - 1; i++) {
+                                let tmpNpde = nodes[i]
+                                let str = generator(tmpNpde).code
 
-                                let js_code2 = parse(
-                                    `${str}`
+                                let js_code2 = parse(`${str}`)
+
+                                path.parentPath.insertBefore(
+                                    js_code2.program.body[0]
                                 )
-
-                                path.parentPath.insertBefore(js_code2.program.body[0]);
                             }
 
                             // 删除if 里面多余的表达式
-                            let nodePaths = path.get("expressions");
-                            for(var i=0; i<nodePaths.length-1; i++) {
-                                let tmpPath = nodePaths[i];
-                                tmpPath.remove();
+                            let nodePaths = path.get("expressions")
+                            for (var i = 0; i < nodePaths.length - 1; i++) {
+                                let tmpPath = nodePaths[i]
+                                tmpPath.remove()
                             }
-
                         }
-
                     }
                 },
 
                 // if(x) return; 转为 if(x){ return;}
                 ReturnStatement: {
                     exit(path) {
-                        if ( path.parentPath.isIfStatement()) {
-                            let nodes = [path.node];
+                        if (path.parentPath.isIfStatement()) {
+                            let nodes = [path.node]
                             path.replaceWith(types.blockStatement(nodes))
                         }
                     }
@@ -217,33 +217,34 @@ export default {
                 // a==1 && (b?c=2:d=4)  => if(a==1) {b?c=2:d=4}
                 LogicalExpression: {
                     exit(path) {
+                        let { left, operator, right } = path.node
 
-                        let {left, operator, right} = path.node;
-
-                        let rightPath = path.get("right");
+                        let rightPath = path.get("right")
 
                         // 找到最外层的逻辑表达式
-                        if(rightPath.isConditionalExpression()) {
-                            
-                            if(operator === "&&") {
-                                
-                                let if_node = types.IfStatement(left, types.blockStatement([types.expressionStatement(right)]) , null);
-                                path.replaceWithMultiple(if_node);
+                        if (rightPath.isConditionalExpression()) {
+                            if (operator === "&&") {
+                                let if_node = types.IfStatement(
+                                    left,
+                                    types.blockStatement([
+                                        types.expressionStatement(right)
+                                    ]),
+                                    null
+                                )
+                                path.replaceWithMultiple(if_node)
                             }
                         }
-                    },
+                    }
                 }
-        
             }
 
             // 第二层处理，需要依赖之前的处理结果
-            const visitor2 =
-            {
+            const visitor2 = {
                 // if 后面要么是 ExpressionStatement 要么是 BlockStatement
                 // if(x) a=1, c=2; 转为 if(x){ a=1, c=2;}
                 ExpressionStatement: {
                     exit(path) {
-                        if ( path.parentPath.isIfStatement()) {
+                        if (path.parentPath.isIfStatement()) {
                             // console.log(path);
                             let js_code1 = parse(
                                 `
@@ -259,64 +260,67 @@ export default {
                 BlockStatement: {
                     exit(path) {
                         // 连续两个 block，且 内层block 没有兄弟节点
-                        if ( path.parentPath.isBlockStatement() && 1 == path.parentPath.get("body").length) {
-
+                        if (
+                            path.parentPath.isBlockStatement() &&
+                            1 == path.parentPath.get("body").length
+                        ) {
                             path.parentPath.replaceWith(path.node)
                         }
                     }
-                },
-
+                }
             }
 
-            const visitorConditional =
-            {
+            const visitorConditional = {
                 // 三元表达式
                 ConditionalExpression: {
                     exit(path) {
-
-                        if(path.parentPath.isAssignmentExpression()) {
-                            return;
+                        if (path.parentPath.isAssignmentExpression()) {
+                            return
                         }
 
-                        let {test, consequent, alternate} = path.node;
-                        let new_consequent = types.BlockStatement([types.ExpressionStatement(consequent)]);
-                        let new_alternate = types.BlockStatement([types.ExpressionStatement(alternate)]);
-                        let if_node = types.IfStatement(test, new_consequent, new_alternate);
+                        let { test, consequent, alternate } = path.node
+                        let new_consequent = types.BlockStatement([
+                            types.ExpressionStatement(consequent)
+                        ])
+                        let new_alternate = types.BlockStatement([
+                            types.ExpressionStatement(alternate)
+                        ])
+                        let if_node = types.IfStatement(
+                            test,
+                            new_consequent,
+                            new_alternate
+                        )
 
-                        path.replaceWithMultiple(if_node);
+                        path.replaceWithMultiple(if_node)
 
-                        path.stop();
-                    },
+                        path.stop()
+                    }
                 }
-
             }
 
-            traverse(ast, visitor1);
-            traverse(ast, visitor2);
+            traverse(ast, visitor1)
+            traverse(ast, visitor2)
 
             // 递归处理三元表达式
-            this.recursionConditional(ast, visitorConditional);
+            this.recursionConditional(ast, visitorConditional)
 
-
-            let { code } = generator(ast);
-            return code;
+            let { code } = generator(ast)
+            return code
         },
         recursionConditional(ast, visitorConditional) {
-
             // 递归处理，直到两次结果一致才会停下来
             traverse(ast, visitorConditional)
-            let first  = generator(ast).code;
+            let first = generator(ast).code
 
             traverse(ast, visitorConditional)
-            let  second  = generator(ast).code;
+            let second = generator(ast).code
 
-            while(first !== second) {
-                first = second;
+            while (first !== second) {
+                first = second
                 traverse(ast, visitorConditional)
-                second  = generator(ast).code;
+                second = generator(ast).code
             }
-
-        },
+        }
     },
     computed: {
         codemirror() {
@@ -333,15 +337,14 @@ export default {
 /* Autoresize Demo: https://codemirror.net/demo/resize.html */
 
 .content-inside {
-  /* padding: 20px; */
-  /* padding-bottom: 50px; */
-  /* height: 100%; */
-  flex:1;
-  min-height: 0;
+    /* padding: 20px; */
+    /* padding-bottom: 50px; */
+    /* height: 100%; */
+    flex: 1;
+    min-height: 0;
 
-  display: flex;
+    display: flex;
 }
-
 
 .vue-codemirror {
     width: 100%;
@@ -352,27 +355,27 @@ export default {
     min-height: 90%;
     flex: 1;
     position: relative;
-  overflow: hidden;
-  background: white;
-  }
-  
+    overflow: hidden;
+    background: white;
+}
+
 .CodeMirror-scroll {
     overflow: auto;
 }
-  
-  .editor .CodeMirror-gutters {
+
+.editor .CodeMirror-gutters {
     background-color: white;
     border: none;
-  }
-  
-  .CodeMirror .ErrorGutter {
-    width: .7em;
-  }
-  
-  .CodeMirror pre.errorMarker {
-    background-color: #EB9494;
-  }
-  .CodeMirror-linenumber {
+}
+
+.CodeMirror .ErrorGutter {
+    width: 0.7em;
+}
+
+.CodeMirror pre.errorMarker {
+    background-color: #eb9494;
+}
+.CodeMirror-linenumber {
     /* padding: 0 3px 0 5px;
     min-width: 20px;
     text-align: right; */
@@ -380,40 +383,38 @@ export default {
     /* white-space: nowrap; */
 }
 
-
-
 .splitpane-content {
     flex: 1;
     /* for Firefox, otherwise it overflows the parent*/
     min-height: 0;
     min-width: 0;
-  }
-  
-  .splitpane {
+}
+
+.splitpane {
     flex: 1;
     /* for Firefox, otherwise it overflows the parent*/
     min-height: 0;
     min-width: 0;
-  }
-  
-  .splitpane-divider {
+}
+
+.splitpane-divider {
     background-color: #ddd;
-  }
-  
-  .splitpane-divider.horizontal {
+}
+
+.splitpane-divider.horizontal {
     width: 5px;
-  }
-  
-  .splitpane-divider.vertical {
+}
+
+.splitpane-divider.vertical {
     height: 5px;
-  }
-  
-  .splitpane-divider:hover {
+}
+
+.splitpane-divider:hover {
     background-color: #999;
     cursor: col-resize;
-  }
-  
-  .splitpane-divider.vertical:hover {
+}
+
+.splitpane-divider.vertical:hover {
     cursor: row-resize;
-  }
+}
 </style>
